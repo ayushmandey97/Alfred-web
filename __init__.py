@@ -31,6 +31,9 @@ from functools import wraps
 #for getting the current date
 import datetime
 
+from bs4 import BeautifulSoup
+import urllib
+
 ######################################################
 
 #creating the app engine
@@ -78,7 +81,7 @@ def logout():
 	return redirect(url_for('homepage'))
 
 #SERVICING THE E-COMMERCE REQUESTS FROM THE EXTENSION
-
+'''
 xpaths = {
 	
 	'amazon_name': '//*[@id="productTitle"]/text()',
@@ -93,51 +96,91 @@ xpaths = {
 	'manipalgrocer_name' : 'normalize-space(//h1[@id = "heading_title"]/text()[last()])',
 	'manipalgrocer_price' : 'normalize-space(//h2[@id = "price"]/text()[last()])'
 	
-}
+}'''
+
+########### SCRAPING FUNCTIONS ############
+def flipkart(soup):
+	price = soup.find_all("div", class_="_1vC4OE _37U4_g")[0].get_text()
+	title = title.strip()
+	title = soup.find_all("h1", class_="_3eAQiD")[0].get_text()
+	try:
+		image = soup.find_all("img", class_="sfescn")[0]['src']
+	except Exception:
+		image = "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"
+	
+
+	return (title, price, image)
+
+def amazon(soup):
+	title = soup.find_all(id = "productTitle")[0].get_text()
+	title = title.strip()
+	price = soup.find_all(id = "priceblock_dealprice")[0].get_text()
+	price = price.strip()
+
+	try:
+		image = soup.find_all("div", id="imgTagWrapperId")[0]
+	except Exception:
+		image = "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"
+
+	return (title, price, image)
+
+def grocer(soup):
+	title = soup.find_all(id = "heading_title")[0].get_text()
+	title = title.strip()
+	price = soup.find_all(id = "price")[0].get_text()
+	try:
+		image = soup.find_all("a", class_="thumbnail")[0]['href']
+	except Exception:
+		image = "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"
+
+	return (title, price, image)
 
 
 @app.route('/add-product', methods = ['GET'])
 def add_product():
 	headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.90 Safari/537.36'}
 	url = request.args.get('url')
-	page = requests.get(url,headers=headers)
+	
 	
 	try:
-		doc = html.fromstring(page.content)
+		req = urllib.request.Request(url, headers=headers)
+		f = urllib.request.urlopen(req).read()
+		soup = BeautifulSoup(f, "lxml")
 		
 		#Getting the website domain using regex
 		ext = tldextract.extract(url)
-		result = ext.domain
-
-		product_name = result + "_name"
-		product_price = result + "_price"
-
-		RAW_NAME = doc.xpath(xpaths[product_name])
-		RAW_PRICE = doc.xpath(xpaths[product_price])
-
-		NAME = ' '.join(''.join(RAW_NAME).split()) if RAW_NAME else None
-		PRICE = ' '.join(''.join(RAW_PRICE).split()).strip() if RAW_PRICE else None
-		logger(PRICE)
-		logger(NAME)
+		
+		domain = ext.domain
+		
+		logger(domain)
+		if domain == 'amazon':
+			(title, price, image) = amazon(soup)
+		elif domain == 'flipkart':
+			logger("hello")
+			(title, price, image) = flipkart(soup)
+		elif domain == 'jabong':
+			(title, price, image) = jabong(soup)
+		elif domain == 'manipalgrocer':
+			(title, price, image) = grocer(soup)
+		price = price.replace(",", "")
+		
 		try:
-			PRICE = float(PRICE)
+			price = float(price)
 		except:
 			print("Price not convertible to integer, might be a unicode problem.")
-			PRICE = PRICE[1:]
-			PRICE = float(PRICE)
+			price = price[1:]
+			price = float(price)
 
-		# if page.status_code!=200:
-		# 	print('captha')
+
 		data = {
-				'NAME':NAME,
-				'PRICE':PRICE,
-				'URL':url,
+				'name':title,
+				'price':price,
+				'image':image,
+				'url':url,
 				}
 
 		#Instead of writing data on a file, add it to database
 		logger(data)
-		f = open('data.json','w')
-		json.dump(data,f,indent=4)
 	
 	except Exception as e:
 		logger(e)
