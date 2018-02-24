@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="dist/css/bootstrap.min.css">
-<link rel="stylesheet" href="homecss.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='stylesheets/dashboard.css') }}">
 
 	<title>Welcome </title>
 </head>
@@ -15,15 +15,14 @@
     </div>
     <ul class="nav navbar-nav">
       <li class="active"><a href="#">Home</a></li>
-      <li><a href="shopping.html">Online shopping</a></li>
-      <li><a href="videos.html">Video to watch</a></li>
-      <li><a href="general.html">General bookmarks</a></li>
-      <li ><a href="recommendations.html">Recommendations</a></li>
+      <li><a href="/shopping">Online shopping</a></li>
+      <li><a href="/videos">Video to watch</a></li>
+      <li><a href="/general">General bookmarks</a></li>
+      <li ><a href="/recommendations">Recommendations</a></li>
 
     </ul>
     <ul class="nav navbar-nav navbar-right">
-      <li><a href="#"><span class="glyphicon glyphicon-user"></span> Profile</a></li>
-      <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Log Out</a></li>
+      <li><a href="/logout"><span class="glyphicon glyphicon-log-in"></span> Log Out</a></li>
     </ul>
   </div>
 </nav>
@@ -31,10 +30,10 @@
 
 
 <section >
-    <div class="hero-container">
-      <h1>Welcome to ALFRED</h1>
+    <div class="jumbotron" align = "center" style = "padding-top: 10px; padding-bottom: 15px;">
+      <h1 style = "font-family: run; src: url('assets/fonts/run.ttf');">Welcome to ALFRED</h1>
     
-      <h2>Your Internet guide</h2>
+      <h2 >Your Internet guide</h2>
 
       
     </div>
@@ -42,32 +41,32 @@
 
 <section id="mainlogo">
   <a href="">
-  <img src="icon.jpg" width="200px" height="200px">
+  <img src="{{ url_for('static', filename='stylesheets/assets/icon.jpg') }}" width="150px" height="150px">
 </a>
 </section>
 
 
 <section id = "img1">
-  <a href="general.html">
-  <img src="bookmark.jpg" width="130px" height="130px">
+  <a href="/general">
+  <img src="{{ url_for('static', filename='stylesheets/assets/bookmark.jpg') }}" width="130px" height="130px">
 </a>
 </section>
 
 <section id = "img2">
-  <a href="videos.html">
-  <img src="video.jpg"  width="130px" height="130px">
+  <a href="/videos">
+  <img src="{{ url_for('static', filename='stylesheets/assets/video.jpg') }}"  width="130px" height="130px">
   </a>
 </section>
 
 <section id = "img3">
-  <a href="shopping.html">
-  <img src="cart.jpg"  width="130px" height="130px">
+  <a href="/shopping">
+  <img src="{{ url_for('static', filename='stylesheets/assets/cart.jpg') }}"  width="130px" height="130px">
   </a>
 </section>
 
 
-<script src="bootstrap-3.3.7/dist/jquery-3.3.1.min.js"></script>
-<script src="dist/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
 
 </div>
 </body>

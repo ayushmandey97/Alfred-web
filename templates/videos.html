@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
 
 	<title>Welcome </title>
 </head>
@@ -13,16 +13,15 @@
       <a class="navbar-brand" href="#">Alfred</a>
     </div>
     <ul class="nav navbar-nav">
-      <li><a href="home.html">Home</a></li>
-      <li><a href="shopping.html">Online shopping</a></li>
-      <li class="active"><a href="#">Video to watch</a></li>
-      <li><a href="general.html">General bookmarks</a></li>
-      <li ><a href="recommendations.html">Recommendations</a></li>
+      <li><a href="/dashboard">Home</a></li>
+      <li><a href="/shopping">Online shopping</a></li>
+      <li class="active"><a href="/videos">Video to watch</a></li>
+      <li><a href="/general">General bookmarks</a></li>
+      <li ><a href="/recommendations">Recommendations</a></li>
 
     </ul>
     <ul class="nav navbar-nav navbar-right">
-      <li><a href="#"><span class="glyphicon glyphicon-user"></span> Profile</a></li>
-      <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Log Out</a></li>
+      <li><a href="/logout"><span class="glyphicon glyphicon-log-in"></span> Log Out</a></li>
     </ul>
   </div>
 </nav>
@@ -31,7 +30,7 @@
 <div class="container">
     <div class="row">
 		<div class="well">
-        <h1 class="text-center">You are yet to watch these videos</h1>
+        <h1 style = "font-family: run; src: url('assets/fonts/run.ttf');" class="text-center">You are yet to watch these videos</h1>
         </div>
 	</div>
 </div>
@@ -44,10 +43,10 @@
           <a href="#" >
 
                 <div class="media col-md-3">
-}
+
 </br>
                     <figure class="pull-left" >
-                        <img class="media-object img-rounded img-responsive"  width="220px"  src="http://placehold.it/350x250" alt="placehold.it/350x250" >
+                        <img style = "min-width:200px; min-height:150px;" class="media-object img-rounded img-responsive"  width="220px"  src="{{image_url}}" alt="placehold.it/350x250" >
                     </br>
                     </figure>
                 </div>
@@ -56,9 +55,9 @@
                     <h2>{{title}}</h2>
                     
                 </div>
-                <div class="col-md-3 text-center">
+                <div style = "padding-bottom: 20px" class="col-md-3 text-center">
                     </br></br>
-                    <button type="button" class="btn btn-default btn-lg btn-block"> Watch Now! </button>  
+                    <a href = "{{video_url}}"><button type="button" class="btn btn-danger btn-lg btn-block"> Watch Now! </button>  </a>
                 </div>
           </a>
          
@@ -68,8 +67,8 @@
   <h2> No items to show </h2>
 {% endif %}
 
-<script src="bootstrap-3.3.7/dist/jquery-3.3.1.min.js"></script>
-<script src="dist/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
 
 </body>
 </html>
