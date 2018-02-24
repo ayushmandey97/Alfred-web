@@ -39,6 +39,11 @@ import urllib
 #creating the app engine
 app = Flask(__name__)
 
+#configuring sql settings
+from sql_config import configure
+configure(app)
+mysql = MySQL(app)
+
 #To avoid manual url changes to view unauthorized dashboard
 def is_logged_in(f):
 	@wraps(f)
@@ -112,28 +117,51 @@ def flipkart(soup):
 	return (title, price, image)
 
 def amazon(soup):
-	title = soup.find_all(id = "productTitle")[0].get_text()
+	title = soup.find_all("span", id = "productTitle")[0].get_text()
 	title = title.strip()
-	price = soup.find_all(id = "priceblock_dealprice")[0].get_text()
-	price = price.strip()
+
+	priceList = soup.find_all( "span" , class_ = "a-size-medium a-color-price")
+	prices = []
+	
+	for i in priceList:
+		prices.append((i.get_text().strip()))
+
+	logger(prices)
+	price = min(prices)
+
 
 	try:
 		image = soup.find_all("div", id="imgTagWrapperId")[0]
 	except Exception:
 		image = "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"
 
+	urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', str(image))
+	image = urls[0]
+
 	return (title, price, image)
 
+############ FIX IT - GROCER JABONG
 def grocer(soup):
-	title = soup.find_all(id = "heading_title")[0].get_text()
+	title = soup.find_all("h1", id = "heading_title")[0].get_text()
 	title = title.strip()
-	price = soup.find_all(id = "price")[0].get_text()
+	price = soup.find_all("h2", id = "price")[0].get_text()
 	try:
 		image = soup.find_all("a", class_="thumbnail")[0]['href']
 	except Exception:
 		image = "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"
 
 	return (title, price, image)
+
+def jabong(soup):
+    title = soup.find_all(id = "heading_title")[0].string
+    price = soup.find_all(id = "price")[0].string
+    try:
+        image = title = soup.find_all("a", class_="thumbnail")[0]['href']
+    except IndexError:
+        image = "https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg"
+
+
+    return (title, price, image)
 
 
 @app.route('/add-product', methods = ['GET'])
@@ -158,10 +186,11 @@ def add_product():
 		elif domain == 'flipkart':
 			logger("hello")
 			(title, price, image) = flipkart(soup)
-		elif domain == 'jabong':
-			(title, price, image) = jabong(soup)
 		elif domain == 'manipalgrocer':
 			(title, price, image) = grocer(soup)
+		elif domain == 'jabong':
+			(title, price, image) = jabong(soup)
+
 		price = price.replace(",", "")
 		
 		try:
