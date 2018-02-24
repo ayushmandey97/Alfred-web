@@ -257,52 +257,84 @@ def jabong(soup):
 
     return (title, price, image)
 
+def netflix(soup):
+
+    title = soup.find_all("h1", class_="show-title")[0].string    
+    url = "http://www.omdbapi.com/?t=" + title + "&apikey=b4cb0091"
+    response = requests.get(url)
+    python_dictionary_values = json.loads(response.text)
+    poster = python_dictionary_values['Poster']
+
+
+    return (title, poster)
+
+def dailymotion(soup):
+
+    title = soup.find("meta",  property = "og:title")
+    image = soup.find("meta",  property = "og:image")
+
+    return (title["content"], image["content"])
+
+
+def youtube(url):
+    modified_url = "https://www.youtube.com/oembed?format=json&url=" + url
+    with urllib.request.urlopen(modified_url) as url:
+        data = json.loads(url.read().decode())
+    title = data['title']
+    image = data['thumbnail_url']
+    
+    return (title, image)
+
+
 
 @app.route('/add-product', methods = ['GET'])
 def add_product():
 	headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.90 Safari/537.36'}
 	try:
 		url = request.args.get('url')
+		category = request.args.get('category')
+
 		req = urllib.request.Request(url, headers=headers)
 		f = urllib.request.urlopen(req).read()
 		soup = BeautifulSoup(f, "lxml")
-		
+
 		#Getting the website domain using regex
 		ext = tldextract.extract(url)
-		
 		domain = ext.domain
-		
 		logger(domain)
-		if domain == 'amazon':
-			(title, price, image) = amazon(soup)
-		elif domain == 'flipkart':
-			logger("hello")
-			(title, price, image) = flipkart(soup)
-		elif domain == 'manipalgrocer':
-			(title, price, image) = grocer(soup)
-		elif domain == 'jabong':
-			(title, price, image) = jabong(soup)
-
-
-		data = {
-				'name':title,
-				'price':price,
-				'image':image,
-				'url':url,
-				}
-
-		#Instead of writing data on a file, add it to database
-		logger(data)
 		cur = mysql.connection.cursor()
-		cur.execute("insert into shopping (username, title, price, prod_url, image_url) values (%s, %s, %s, %s, %s)", (session['username'], title, price, url, image))
+
+		#PRODUCTS
+		if category == 'product':
+			if domain == 'amazon':
+				(title, price, image) = amazon(soup)
+			elif domain == 'flipkart':
+				(title, price, image) = flipkart(soup)
+			elif domain == 'manipalgrocer':
+				(title, price, image) = grocer(soup)
+			elif domain == 'jabong':
+				(title, price, image) = jabong(soup)
+
+			cur.execute("insert into shopping (username, title, price, prod_url, image_url) values (%s, %s, %s, %s, %s)", (session['username'], title, price, url, image))
+
+		#VIDEOS
+		elif category == 'video':
+		
+			if domain == 'netflix':
+				(title, image) = netflix(soup)
+			elif domain == 'dailymotion':
+				(title, image) = dailymotion(soup)
+			elif domain == 'youtube':
+				(title, image) = youtube(url)
+			cur.execute("insert into videos (username, title, vid_url, image_url) values (%s, %s, %s, %s)", (session['username'], title, url, image))
+
 		mysql.connection.commit()
 		cur.close()
 	
 	except Exception as e:
-		logger(e)
+		logger("***** EXCEPTION ***** -> " + str(e))
 
 	return redirect(url_for('dashboard'))
-	
 
 def logger(msg):
 	print("************************************")
