@@ -32,7 +32,7 @@ from bs4 import BeautifulSoup
 import urllib
 
 ######################################################
-
+session = {}
 #creating the app engine
 app = Flask(__name__)
 
@@ -55,13 +55,13 @@ def is_logged_in(f):
 #Homepage
 @app.route('/', methods = ['GET', 'POST'])
 def homepage():
-
 	if request.method == 'POST':
 		method = request.form['method']
 		if method == 'login':
 			
 			#get form fields
 			username = request.form['username']
+			eff = request.form['username']
 			password_candidate = request.form['password']
 
 			logger(str(username))
@@ -77,6 +77,9 @@ def homepage():
 					#Passes
 					session['logged_in'] = True
 					session['username'] = username
+
+					with open('username.csv', 'w') as f:
+						f.write(session['username'])
 
 					flash('Successfully logged in!', 'success')
 					return redirect(url_for('dashboard'))
@@ -200,8 +203,9 @@ def logout():
 ########### SCRAPING FUNCTIONS ############
 def flipkart(soup):
 	price = soup.find_all("div", class_="_1vC4OE _37U4_g")[0].get_text()
-	title = title.strip()
+	
 	title = soup.find_all("h1", class_="_3eAQiD")[0].get_text()
+	title = title.strip()
 	try:
 		image = soup.find_all("img", class_="sfescn")[0]['src']
 	except Exception:
@@ -256,7 +260,7 @@ def jabong(soup):
 
 
     return (title, price, image)
-
+############## FIX IT
 def netflix(soup):
 
     title = soup.find_all("h1", class_="show-title")[0].string    
@@ -289,6 +293,10 @@ def youtube(url):
 
 @app.route('/add-product', methods = ['GET'])
 def add_product():
+	if not session:
+		with open('username.csv', 'r') as f:
+			session['username'] = f.read()
+
 	headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.90 Safari/537.36'}
 	try:
 		url = request.args.get('url')
@@ -314,7 +322,6 @@ def add_product():
 				(title, price, image) = grocer(soup)
 			elif domain == 'jabong':
 				(title, price, image) = jabong(soup)
-
 			cur.execute("insert into shopping (username, title, price, prod_url, image_url) values (%s, %s, %s, %s, %s)", (session['username'], title, price, url, image))
 
 		#VIDEOS
