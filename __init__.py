@@ -347,7 +347,7 @@ def logger(msg):
 #Script only runs if explictly told, but not if imported
 if __name__ == '__main__':
 	app.secret_key = 'secret_key'
-	app.run(debug=True)
+	app.run(debug=True, threaded=True)
 
 
 '''
