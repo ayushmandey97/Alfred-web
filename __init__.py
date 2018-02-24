@@ -261,10 +261,8 @@ def jabong(soup):
 @app.route('/add-product', methods = ['GET'])
 def add_product():
 	headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.90 Safari/537.36'}
-	url = request.args.get('url')
-	
-	
 	try:
+		url = request.args.get('url')
 		req = urllib.request.Request(url, headers=headers)
 		f = urllib.request.urlopen(req).read()
 		soup = BeautifulSoup(f, "lxml")
@@ -285,15 +283,6 @@ def add_product():
 		elif domain == 'jabong':
 			(title, price, image) = jabong(soup)
 
-		price = price.replace(",", "")
-		
-		try:
-			price = float(price)
-		except:
-			print("Price not convertible to integer, might be a unicode problem.")
-			price = price[1:]
-			price = float(price)
-
 
 		data = {
 				'name':title,
@@ -304,11 +293,15 @@ def add_product():
 
 		#Instead of writing data on a file, add it to database
 		logger(data)
+		cur = mysql.connection.cursor()
+		cur.execute("insert into shopping (username, title, price, prod_url, image_url) values (%s, %s, %s, %s, %s)", (session['username'], title, price, url, image))
+		mysql.connection.commit()
+		cur.close()
 	
 	except Exception as e:
 		logger(e)
 
-	return render_template('home.html')
+	return redirect(url_for('dashboard'))
 	
 
 def logger(msg):
