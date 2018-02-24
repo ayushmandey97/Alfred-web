@@ -10,9 +10,6 @@ import csv,os,json,re
 #To send requests
 import requests
 
-#To keep delay in sending crawl requests
-from time import sleep
-
 #Flask
 from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
 
@@ -55,27 +52,141 @@ def is_logged_in(f):
 			return redirect(url_for('homepage'))
 	return wrap
 
-#REGISTRATION
-class RegisterForm(Form):
-	name = StringField('', [validators.Length(min=1, max=50)])
-	username = StringField('', [validators.Length(min=4, max=25)])
-	email = StringField('', [validators.Length(min=6, max=50)])
-	password = PasswordField('', [
-		validators.DataRequired(),
-		validators.EqualTo('confirm', message='Passwords do not match')
-	])
-	confirm = PasswordField('')
-
-#LOGIN
-class LoginForm(Form):
-	username = StringField('', [validators.Length(min=4, max=25)])
-	password = PasswordField('')
-
-
-#HOMEPAGE
-@app.route('/', methods = ['GET'])
+#Homepage
+@app.route('/', methods = ['GET', 'POST'])
 def homepage():
-	return render_template('home.html')
+
+	if request.method == 'POST':
+		method = request.form['method']
+		if method == 'login':
+			
+			#get form fields
+			username = request.form['username']
+			password_candidate = request.form['password']
+
+			logger(str(username))
+			#creating a cursor
+			cur = mysql.connection.cursor()
+			result = cur.execute('select * from users where username = %s', [username])
+			if result > 0:
+				data = cur.fetchone()
+				password = data['password']
+
+				#comparing candidate with hashed password
+				if sha256_crypt.verify(password_candidate, password):
+					#Passes
+					session['logged_in'] = True
+					session['username'] = username
+
+					flash('Successfully logged in!', 'success')
+					return redirect(url_for('dashboard'))
+
+
+				else:
+					flash("Invalid credentials", 'danger')
+					return redirect(url_for('homepage'))
+
+				cur.close()
+
+			else:
+				flash("Username not found", 'danger')
+				return redirect(url_for('homepage'))
+
+		#Password from the form is not getting retreived
+		elif method == 'register':			
+			
+			name = request.form['name']
+			username = request.form['username']
+			password = str(request.form['password'])
+			
+			logger(password)
+			
+			password = sha256_crypt.encrypt(password) #creating password hash
+			
+			cur = mysql.connection.cursor()
+			cur.execute('insert into users(name, username, password) values(%s, %s, %s)', (name, username, password))
+			mysql.connection.commit()
+			cur.close()
+			flash('Successfully registered!', 'success')
+			session['logged_in'] = True
+			session['username'] = username
+			return render_template('dashboard.html')
+		else:
+			flash("Mismatching passwords!", "danger")
+			return redirect(url_for('homepage'))
+
+	return render_template('index.html')
+
+@app.route('/dashboard', methods = ['GET'])
+@is_logged_in
+def dashboard():
+	return render_template('dashboard.html')
+
+@app.route('/shopping', methods = ['GET'])
+@is_logged_in
+def shopping():
+	cur = mysql.connection.cursor()
+	result = cur.execute("select title, price, prod_url, image_url from shopping where username = %s", [session['username']])
+	if result > 0:
+		data = cur.fetchall()
+		
+		title = []
+		price = []
+		prod_url = []
+		image_url = []
+		
+		for row in data:
+			title.append(row['title'])
+			price.append(row['price'])
+			prod_url.append(row['prod_url'])
+			image_url.append(row['image_url'])
+
+		return render_template('shopping.html', data = zip(title,price,prod_url,image_url))
+
+	else:
+		return render_template('shopping.html', no_items = True)
+
+
+@app.route('/videos', methods = ['GET'])
+@is_logged_in
+def videos():
+	cur = mysql.connection.cursor()
+	result = cur.execute("select title, vid_url, image_url from videos where username = %s", [session['username']])
+	if result > 0:
+		data = cur.fetchall()
+		title = []
+		vid_url = []
+		image_url = []
+		for row in data:
+			title.append(row['title'])
+			vid_url.append(row['vid_url'])
+			image_url.append(row['image_url'])
+
+		return render_template('videos.html', data = zip(title,image_url,vid_url))
+
+	else:
+		return render_template('videos.html', no_items = True)
+
+@app.route('/bookmarks', methods = ['GET'])
+@is_logged_in
+def bookmarks():
+	cur = mysql.connection.cursor()
+	result = cur.execute("select title, content, url from bookmarks where username = %s", [session['username']])
+	if result > 0:
+		data = cur.fetchall()
+		title = []
+		content = []
+		url = []
+		for row in data:
+			title.append(row['title'])
+			content.append(row['content'])
+			url.append(row['url'])
+
+		return render_template('general.html', data = zip(title,content,url))
+
+	else:
+		return render_template('general.html', no_items = True)
+
 
 #LOGOUT
 @app.route('/logout')
@@ -85,23 +196,6 @@ def logout():
 	flash('Successfully logged out.','success')
 	return redirect(url_for('homepage'))
 
-#SERVICING THE E-COMMERCE REQUESTS FROM THE EXTENSION
-'''
-xpaths = {
-	
-	'amazon_name': '//*[@id="productTitle"]/text()',
-	'amazon_price' : '//*[@id="priceblock_ourprice"]/text()',
-
-	'flipkart_name' : '//*[@id="container"]/div/div[1]/div/div/div/div[1]/div/div[2]/div[2]/div[1]/div/h1/text()[1]',
-	'flipkart_price' : '//*[@id="container"]/div/div[1]/div/div/div/div[1]/div/div[2]/div[2]/div[4]/div[1]/div/div[1]/text()[2]',
-
-	'jabong_name' : 'normalize-space(//span[@class="product-title"]/text()[last()])',
-	'jabong_price' : '//*[@id="pdp-price-info"]/span[3]/text()',
-
-	'manipalgrocer_name' : 'normalize-space(//h1[@id = "heading_title"]/text()[last()])',
-	'manipalgrocer_price' : 'normalize-space(//h2[@id = "price"]/text()[last()])'
-	
-}'''
 
 ########### SCRAPING FUNCTIONS ############
 def flipkart(soup):
@@ -229,3 +323,21 @@ def logger(msg):
 if __name__ == '__main__':
 	app.secret_key = 'secret_key'
 	app.run(debug=True)
+
+
+'''
+xpaths = {
+	
+	'amazon_name': '//*[@id="productTitle"]/text()',
+	'amazon_price' : '//*[@id="priceblock_ourprice"]/text()',
+
+	'flipkart_name' : '//*[@id="container"]/div/div[1]/div/div/div/div[1]/div/div[2]/div[2]/div[1]/div/h1/text()[1]',
+	'flipkart_price' : '//*[@id="container"]/div/div[1]/div/div/div/div[1]/div/div[2]/div[2]/div[4]/div[1]/div/div[1]/text()[2]',
+
+	'jabong_name' : 'normalize-space(//span[@class="product-title"]/text()[last()])',
+	'jabong_price' : '//*[@id="pdp-price-info"]/span[3]/text()',
+
+	'manipalgrocer_name' : 'normalize-space(//h1[@id = "heading_title"]/text()[last()])',
+	'manipalgrocer_price' : 'normalize-space(//h2[@id = "price"]/text()[last()])'
+	
+}'''
