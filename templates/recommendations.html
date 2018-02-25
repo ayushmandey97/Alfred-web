@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
 
 	<title>Welcome </title>
 </head>
@@ -38,33 +38,41 @@
         </div>
 	</div>
 </div>
-<<div class = "container" style="box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);transition: 0.3s;" >
+{% if no_items is not defined %}
+  {% for title,prod_url,image_url,typer in data %}
+<div class = "container" style="box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);transition: 0.3s;" >
 
 
-          <a href="#" >
+          
 
                 <div class="media col-md-3">
 </br>
                     <figure class="pull-left" >
-                        <img class="media-object img-rounded img-responsive"  width="220px"  src="http://placehold.it/350x250" alt="placehold.it/350x250" >
+                        <img class="media-object img-rounded img-responsive"  width="220px"  src="{{image_url}}" alt="placehold.it/350x250" >
                     </br>
                     </figure>
                 </div>
                 <div>
-                
-                    <h2>Here is product one</h2>
-                    <h4>Rs 20</h4>
+                    
+                    <h2>{{title}}</h2>
+                    <h4> -- {{typer}}</h4>
+                    
                 </div>
                 <div class="col-md-3 text-center">
                     </br></br>
-                    <button type="button" class="btn btn-default btn-lg btn-block"> Buy Now! </button>  
+                    <a href="{{prod_url}}" >
+                    <button type="button" class="btn btn-default btn-lg btn-block"> Visit Link! </button> 
+                    </a> 
                 </div>
           </a>
          
         </div>
-
-<script src="bootstrap-3.3.7/dist/jquery-3.3.1.min.js"></script>
-<script src="dist/js/bootstrap.min.js"></script>
+{% endfor %}
+{% else %}
+  <h2> No items to show </h2>
+{% endif %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
 
 </body>
 </html>

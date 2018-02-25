@@ -31,10 +31,14 @@ import datetime
 from bs4 import BeautifulSoup
 import urllib
 
+
+
 ######################################################
-session = {}
+
 #creating the app engine
 app = Flask(__name__)
+
+session = {}
 
 #configuring sql settings
 from sql_config import configure
@@ -174,7 +178,7 @@ def videos():
 @is_logged_in
 def bookmarks():
 	cur = mysql.connection.cursor()
-	result = cur.execute("select title, content, url from bookmarks where username = %s", [session['username']])
+	result = cur.execute("select title, url from bookmarks where username = %s", [session['username']])
 	if result > 0:
 		data = cur.fetchall()
 		title = []
@@ -182,13 +186,36 @@ def bookmarks():
 		url = []
 		for row in data:
 			title.append(row['title'])
-			content.append(row['content'])
 			url.append(row['url'])
 
-		return render_template('general.html', data = zip(title,content,url))
+		return render_template('general.html', data = zip(title,url))
 
 	else:
 		return render_template('general.html', no_items = True)
+
+@app.route('/recommendations', methods = ['GET'])
+@is_logged_in
+def recommendations():
+	cur = mysql.connection.cursor()
+	result = cur.execute("select prod_url,image_url, type, title from recommendations where username = %s", [session['username']])
+	if result > 0:
+		data = cur.fetchall()
+		
+		prod_url = []
+		image_url = []
+		typer = []
+		title = []
+
+		for row in data:
+			title.append(row['title'])
+			prod_url.append(row['prod_url'])
+			image_url.append(row['image_url'])
+			typer.append(row['type'])
+		logger((title,prod_url,image_url, typer))
+		return render_template('recommendations.html', data = zip(title,prod_url,image_url, typer))
+
+	else:
+		return render_template('recommendations.html', no_items = True)
 
 
 #LOGOUT
@@ -215,6 +242,35 @@ def flipkart(soup):
 	
 
 	return (title, price, image)
+
+def amazon_recommender(url):
+    sauce = urllib.request.urlopen(url).read()
+    soup = BeautifulSoup(sauce,'lxml')
+    image = soup.find_all("ol", class_="a-carousel")[0]
+
+    
+    urls = re.findall('href="/.*?_encoding=UTF8&amp;psc=1', str(image))   
+    print(urls)
+
+    amazon_urls = []
+
+    #for link in urls:
+    #	print(link)
+        #amazon_urls.append("https://www.amazon.in/" + link[6:] )
+
+    amazon_urls = list(set(amazon_urls))
+    cur = mysql.connection.cursor()
+    #for link in amazon_urls:
+    	#sauce = urllib.request.urlopen(link).read()
+    	#soup = BeautifulSoup(sauce,'lxml')
+
+
+
+    	#(title, _ , poster) = amazon(soup)
+    	#logger((title, poster))
+    	#cur.execute("insert into recommendations (title, image_url, prod_url, type) values (%s, %s, %s, %s)", (title, poster, link, amazon))
+        
+    cur.close()
 
 def amazon(soup):
 	title = soup.find_all("span", id = "productTitle")[0].get_text()
@@ -262,7 +318,60 @@ def jabong(soup):
 
 
     return (title, price, image)
-############## FIX IT
+############## FIX IT END ################
+subreddits = {}
+with open('subreddits.csv' , encoding="utf8" ) as csvfile:
+    readCSV = csv.reader(csvfile, delimiter=',')
+    for row in readCSV:
+       subreddits[row[0]] = row[1]
+
+def recommendations(inp):
+    strURL = 'https://www.imdb.com/title/' + inp
+    src = requests.get(strURL).text
+    bs = BeautifulSoup(src , 'lxml')
+    recs = [rec['data-tconst'][2:] for rec in bs.findAll('div', 'rec_item')]
+
+    ctr = 0
+    for i in recs[:8]:
+        url = "http://www.omdbapi.com/?apikey=b4cb0091&i=tt" + i
+        response = requests.get(url)
+        python_dictionary_values = json.loads(response.text)
+
+
+        searchWord = python_dictionary_values['Title']
+        poster = python_dictionary_values['Poster']
+
+        
+        urlT = "https://www.youtube.com/results?search_query=" + searchWord.replace(" ","")
+        html_content = urllib.request.urlopen(urlT)
+        search_results = re.findall(r'href=\"\/watch\?v=(.{11})', html_content.read().decode())
+        
+
+        if ctr == 0:
+        	link = "http://www.youtube.com/watch?v=" + search_results[0]
+        	typer = "youtube"
+        if ctr == 1:
+        	link = "https://en.wikipedia.org/wiki/" + searchWord.replace(" ","_")
+        	typer = "wiki"
+        if ctr == 2:
+        	link = "https://www.reddit.com/r/all/"
+        	typer = "reddit"
+
+        	try:
+        		link = "https://www.reddit.com" + subreddits[searchWord]
+        	except Exception:
+        		ctr = (ctr+1)%4
+        		continue
+
+       	logger((link, typer))
+        ctr = (ctr + 1)%4
+
+        cur = mysql.connection.cursor()
+        cur.execute("insert into recommendations (title, image_url, prod_url, type, username) values (%s, %s, %s, %s, %s)", (searchWord, poster, link, typer, session['username']))
+        mysql.connection.commit()
+        cur.close()
+
+
 def netflix(soup):
 
     title = soup.find_all("h1", class_="show-title")[0].string    
@@ -270,9 +379,12 @@ def netflix(soup):
     response = requests.get(url)
     python_dictionary_values = json.loads(response.text)
     poster = python_dictionary_values['Poster']
+    
+    #generating recs
+    key = python_dictionary_values['imdbID']
 
 
-    return (title, poster)
+    return (title, poster, key)
 
 def dailymotion(soup):
 
@@ -292,9 +404,9 @@ def youtube(url):
     return (title, image)
 
 
-
 @app.route('/add-product', methods = ['GET'])
 def add_product():
+	
 	if not session:
 		with open('username.csv', 'r') as f:
 			session['username'] = f.read()
@@ -334,20 +446,31 @@ def add_product():
 	elif category == 'video':
 	
 		if domain == 'netflix':
-			(title, image) = netflix(soup)
+			(title, image, key) = netflix(soup)
 		elif domain == 'dailymotion':
 			(title, image) = dailymotion(soup)
 		elif domain == 'youtube':
 			(title, image) = youtube(url)
+		logger((title, image))
 		cur.execute("insert into videos (username, title, vid_url, image_url) values (%s, %s, %s, %s)", (session['username'], title, url, image))
 
 	mysql.connection.commit()
 	cur.close()
 	
+	if domain == 'netflix':
+		recommendations(key)
+	elif domain == 'amazon':
+		amazon_recommender(url)
+		
+	
 	# except Exception as e:
 	# 	logger("***** EXCEPTION ***** -> " + str(e))
 
 	return redirect(url_for('dashboard'))
+
+
+
+
 
 def logger(msg):
 	print("************************************")
