@@ -334,7 +334,7 @@ def recommendations(inp):
 
         searchWord = python_dictionary_values['Title']
         poster = python_dictionary_values['Poster']
-
+        logger(python_dictionary_values)
         
         urlT = "https://www.youtube.com/results?search_query=" + searchWord.replace(" ","")
         html_content = urllib.request.urlopen(urlT)
@@ -348,16 +348,14 @@ def recommendations(inp):
         	link = "https://en.wikipedia.org/wiki/" + searchWord.replace(" ","_")
         	typer = "wiki"
         if ctr == 2:
-        	link = "https://www.reddit.com/r/all/"
-        	typer = "reddit"
-
-        	try:
+        	if searchWord in subreddits:
         		link = "https://www.reddit.com" + subreddits[searchWord]
-        	except Exception:
-        		ctr = (ctr+1)%4
-        		continue
+        		typer = "reddit"
+        	else:
+        		link = "http://www.youtube.com/watch?v=" + search_results[0]
+        		typer = "youtube"
 
-        ctr = (ctr + 1)%4
+        ctr = (ctr + 1)%3
 
         cur = mysql.connection.cursor()
         cur.execute("insert into recommendations (title, image_url, prod_url, type, username) values (%s, %s, %s, %s, %s)", (searchWord, poster, link, typer, session['username']))
