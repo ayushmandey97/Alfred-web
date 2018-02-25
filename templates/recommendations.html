@@ -13,17 +13,16 @@
       <a class="navbar-brand" href="#">Alfred</a>
     </div>
     <ul class="nav navbar-nav">
-      <li ><a href="home.html">Home</a></li>
-      <li><a href="shopping.html">Online shopping</a></li>
-      <li><a href="videos.html">Video to watch</a></li>
-      <li><a href="general.html">General bookmarks</a></li>
+      <li ><a href="/dashboard">Home</a></li>
+      <li><a href="/shopping">Online shopping</a></li>
+      <li><a href="/videos">Video to watch</a></li>
+      <li><a href="/general">General bookmarks</a></li>
       <li class="active"><a href="#">Recommendations</a></li>
 
 
     </ul>
     <ul class="nav navbar-nav navbar-right">
-      <li><a href="#"><span class="glyphicon glyphicon-user"></span> Profile</a></li>
-      <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Log Out</a></li>
+      <li><a href="/logout"><span class="glyphicon glyphicon-log-in"></span> Log Out</a></li>
     </ul>
   </div>
 </nav>
@@ -67,6 +66,9 @@
           </a>
          
         </div>
+  <br>
+  <br>
+  <br>
 {% endfor %}
 {% else %}
   <h2> No items to show </h2>

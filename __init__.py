@@ -68,7 +68,6 @@ def homepage():
 			eff = request.form['username']
 			password_candidate = request.form['password']
 
-			logger(str(username))
 			#creating a cursor
 			cur = mysql.connection.cursor()
 			result = cur.execute('select * from users where username = %s', [username])
@@ -106,7 +105,6 @@ def homepage():
 			username = request.form['username']
 			password = str(request.form['password'])
 			
-			logger(password)
 			
 			password = sha256_crypt.encrypt(password) #creating password hash
 			
@@ -197,7 +195,7 @@ def bookmarks():
 @is_logged_in
 def recommendations():
 	cur = mysql.connection.cursor()
-	result = cur.execute("select prod_url,image_url, type, title from recommendations where username = %s", [session['username']])
+	result = cur.execute("select prod_url,image_url, type, title from recommendations where username = %s order by title", [session['username']])
 	if result > 0:
 		data = cur.fetchall()
 		
@@ -231,7 +229,6 @@ def logout():
 def flipkart(soup):
 	price = soup.find_all("div", class_="_1vC4OE _37U4_g")[0].get_text()
 	price = price[1:]
-	logger(price)
 	
 	title = soup.find_all("h1", class_="_3eAQiD")[0].get_text()
 	title = title.strip()
@@ -254,21 +251,18 @@ def amazon_recommender(url):
 
     amazon_urls = []
 
-    #for link in urls:
-    #	print(link)
-        #amazon_urls.append("https://www.amazon.in/" + link[6:] )
+    for link in urls:
+        amazon_urls.append("https://www.amazon.in/" + link[6:] )
 
     amazon_urls = list(set(amazon_urls))
     cur = mysql.connection.cursor()
-    #for link in amazon_urls:
-    	#sauce = urllib.request.urlopen(link).read()
-    	#soup = BeautifulSoup(sauce,'lxml')
-
-
-
-    	#(title, _ , poster) = amazon(soup)
-    	#logger((title, poster))
-    	#cur.execute("insert into recommendations (title, image_url, prod_url, type) values (%s, %s, %s, %s)", (title, poster, link, amazon))
+    for link in amazon_urls:
+    	sauce = urllib.request.urlopen(link).read()
+    	soup = BeautifulSoup(sauce,'lxml')
+    	(title, _ , poster) = amazon(soup)
+    	logger((title, poster))
+    	cur.execute("insert into recommendations (title, image_url, prod_url, type, username) values (%s, %s, %s, %s, %s)", (title, poster, link, 'amazon', session['username']))
+    	mysql.connection.commit()
         
     cur.close()
 
@@ -282,7 +276,6 @@ def amazon(soup):
 	for i in priceList:
 		prices.append((i.get_text().strip()))
 
-	logger(prices)
 	price = min(prices)
 
 
@@ -363,7 +356,6 @@ def recommendations(inp):
         		ctr = (ctr+1)%4
         		continue
 
-       	logger((link, typer))
         ctr = (ctr + 1)%4
 
         cur = mysql.connection.cursor()
@@ -424,7 +416,6 @@ def add_product():
 	#Getting the website domain using regex
 	ext = tldextract.extract(url)
 	domain = ext.domain
-	logger(domain)
 	cur = mysql.connection.cursor()
 
 	#PRODUCTS
@@ -439,7 +430,6 @@ def add_product():
 			(title, price, image) = jabong(soup)
 
 
-		logger((title, price, image))
 		cur.execute("insert into shopping (username, title, price, prod_url, image_url) values (%s, %s, %s, %s, %s)", (session['username'], title, price, url, image))
 
 	#VIDEOS
@@ -451,7 +441,6 @@ def add_product():
 			(title, image) = dailymotion(soup)
 		elif domain == 'youtube':
 			(title, image) = youtube(url)
-		logger((title, image))
 		cur.execute("insert into videos (username, title, vid_url, image_url) values (%s, %s, %s, %s)", (session['username'], title, url, image))
 
 	mysql.connection.commit()
