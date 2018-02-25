@@ -203,6 +203,8 @@ def logout():
 ########### SCRAPING FUNCTIONS ############
 def flipkart(soup):
 	price = soup.find_all("div", class_="_1vC4OE _37U4_g")[0].get_text()
+	price = price[1:]
+	logger(price)
 	
 	title = soup.find_all("h1", class_="_3eAQiD")[0].get_text()
 	title = title.strip()
@@ -296,50 +298,54 @@ def add_product():
 	if not session:
 		with open('username.csv', 'r') as f:
 			session['username'] = f.read()
+			session['logged_in'] = True
 
 	headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.90 Safari/537.36'}
-	try:
-		url = request.args.get('url')
-		category = request.args.get('category')
+	#try:
+	url = request.args.get('url')
+	category = request.args.get('category')
 
-		req = urllib.request.Request(url, headers=headers)
-		f = urllib.request.urlopen(req).read()
-		soup = BeautifulSoup(f, "lxml")
+	req = urllib.request.Request(url, headers=headers)
+	f = urllib.request.urlopen(req).read()
+	soup = BeautifulSoup(f, "lxml")
 
-		#Getting the website domain using regex
-		ext = tldextract.extract(url)
-		domain = ext.domain
-		logger(domain)
-		cur = mysql.connection.cursor()
+	#Getting the website domain using regex
+	ext = tldextract.extract(url)
+	domain = ext.domain
+	logger(domain)
+	cur = mysql.connection.cursor()
 
-		#PRODUCTS
-		if category == 'product':
-			if domain == 'amazon':
-				(title, price, image) = amazon(soup)
-			elif domain == 'flipkart':
-				(title, price, image) = flipkart(soup)
-			elif domain == 'manipalgrocer':
-				(title, price, image) = grocer(soup)
-			elif domain == 'jabong':
-				(title, price, image) = jabong(soup)
-			cur.execute("insert into shopping (username, title, price, prod_url, image_url) values (%s, %s, %s, %s, %s)", (session['username'], title, price, url, image))
+	#PRODUCTS
+	if category == 'product':
+		if domain == 'amazon':
+			(title, price, image) = amazon(soup)
+		elif domain == 'flipkart':
+			(title, price, image) = flipkart(soup)
+		elif domain == 'manipalgrocer':
+			(title, price, image) = grocer(soup)
+		elif domain == 'jabong':
+			(title, price, image) = jabong(soup)
 
-		#VIDEOS
-		elif category == 'video':
-		
-			if domain == 'netflix':
-				(title, image) = netflix(soup)
-			elif domain == 'dailymotion':
-				(title, image) = dailymotion(soup)
-			elif domain == 'youtube':
-				(title, image) = youtube(url)
-			cur.execute("insert into videos (username, title, vid_url, image_url) values (%s, %s, %s, %s)", (session['username'], title, url, image))
 
-		mysql.connection.commit()
-		cur.close()
+		logger((title, price, image))
+		cur.execute("insert into shopping (username, title, price, prod_url, image_url) values (%s, %s, %s, %s, %s)", (session['username'], title, price, url, image))
+
+	#VIDEOS
+	elif category == 'video':
 	
-	except Exception as e:
-		logger("***** EXCEPTION ***** -> " + str(e))
+		if domain == 'netflix':
+			(title, image) = netflix(soup)
+		elif domain == 'dailymotion':
+			(title, image) = dailymotion(soup)
+		elif domain == 'youtube':
+			(title, image) = youtube(url)
+		cur.execute("insert into videos (username, title, vid_url, image_url) values (%s, %s, %s, %s)", (session['username'], title, url, image))
+
+	mysql.connection.commit()
+	cur.close()
+	
+	# except Exception as e:
+	# 	logger("***** EXCEPTION ***** -> " + str(e))
 
 	return redirect(url_for('dashboard'))
 
