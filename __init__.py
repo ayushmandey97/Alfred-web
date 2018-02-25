@@ -172,11 +172,11 @@ def videos():
 	else:
 		return render_template('videos.html', no_items = True)
 
-@app.route('/bookmarks', methods = ['GET'])
+@app.route('/general', methods = ['GET'])
 @is_logged_in
 def bookmarks():
 	cur = mysql.connection.cursor()
-	result = cur.execute("select title, url from bookmarks where username = %s", [session['username']])
+	result = cur.execute("select title, url, content from bookmarks where username = %s", [session['username']])
 	if result > 0:
 		data = cur.fetchall()
 		title = []
@@ -185,8 +185,9 @@ def bookmarks():
 		for row in data:
 			title.append(row['title'])
 			url.append(row['url'])
+			content.append(row['content'])
 
-		return render_template('general.html', data = zip(title,url))
+		return render_template('general.html', data = zip(title,url,content))
 
 	else:
 		return render_template('general.html', no_items = True)
@@ -442,6 +443,14 @@ def add_product():
 		elif domain == 'youtube':
 			(title, image) = youtube(url)
 		cur.execute("insert into videos (username, title, vid_url, image_url) values (%s, %s, %s, %s)", (session['username'], title, url, image))
+
+	elif category == 'general':
+		content = soup.find_all('p')[0].getText()
+		title = soup.title.string
+
+		logger((content, title))
+
+		cur.execute("insert into bookmarks (username, title, content, url) values (%s, %s, %s, %s)", (session['username'], title, content, url))
 
 	mysql.connection.commit()
 	cur.close()

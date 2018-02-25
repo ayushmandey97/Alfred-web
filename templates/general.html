@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" href="dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
 
 	<title>Welcome </title>
 </head>
@@ -13,15 +13,14 @@
       <a class="navbar-brand" href="#">Alfred</a>
     </div>
     <ul class="nav navbar-nav">
-      <li ><a href="home.html">Home</a></li>
-      <li><a href="shopping.html">Online shopping</a></li>
-      <li><a href="videos.html">Video to watch</a></li>
-      <li class="active"><a href="#">General bookmarks</a></li>
-      <li ><a href="recommendations.html">Recommendations</a></li>
+      <li ><a href="/dashboard">Home</a></li>
+      <li><a href="/shopping">Online shopping</a></li>
+      <li><a href="/videos">Video to watch</a></li>
+      <li class="active"><a href="/general">General bookmarks</a></li>
+      <li ><a href="/recommendations">Recommendations</a></li>
 
     </ul>
     <ul class="nav navbar-nav navbar-right">
-      <li><a href="#"><span class="glyphicon glyphicon-user"></span> Profile</a></li>
       <li><a href="#"><span class="glyphicon glyphicon-log-in"></span> Log Out</a></li>
     </ul>
   </div>
@@ -37,11 +36,10 @@
 	</div>
 </div>
 {% if no_items is not defined %}
-  {% for title, content, url in data %}
+  {% for title, url, content in data %}
  <div class = "container" style="box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);transition: 0.3s;" >
 
 
-          <a href="#" >
 
                 <div class="media col-md-3">
 
@@ -53,18 +51,22 @@
                 </div>
                 <div class="col-md-3 text-center">
                     </br></br></br>
-                   
+                   <a href="{{url}}" >
+                      <button type="button" style="margin-bottom: 10px" class="btn btn-warning btn-lg btn-block"> Visit Link </button>  
+                      </a>
                     
                 </div>
-          </a>
          
         </div>
+  <br>
+  <br>
+  <br>
 {% endfor %}
 {% else %}
-  <h2> No items to show </h2>
+  <h2 align = "center"> No items to show </h2>
 {% endif %}
-<script src="bootstrap-3.3.7/dist/jquery-3.3.1.min.js"></script>
-<script src="dist/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
 
 </body>
 </html>
