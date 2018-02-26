@@ -314,7 +314,7 @@ def jabong(soup):
     return (title, price, image)
 ############## FIX IT END ################
 subreddits = {}
-with open('subreddits.csv' , encoding="utf8" ) as csvfile:
+with open('subreddits.csv' , 'r' ) as csvfile:
     readCSV = csv.reader(csvfile, delimiter=',')
     for row in readCSV:
        subreddits[row[0]] = row[1]
