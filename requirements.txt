@@ -24,3 +24,6 @@ requests == 2.18.4
 
 # __init__.py: 5
 tldextract == 2.2.0
+
+#For hosting
+gunicorn == 19.4.5
