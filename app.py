@@ -1,12 +1,3 @@
-from flask import Flask
-app = Flask(__name__)
-@app.route('/')
-def index():
-	return "<h1> Yo, it's working! </h1>"
-if __name__ == "__main__":
-	app.run()
-
-'''
 #For xpath
 from lxml import html
 
@@ -507,8 +498,5 @@ if __name__ == '__main__':
 # 	'manipalgrocer_price' : 'normalize-space(//h2[@id = "price"]/text()[last()])'
 	
 # }
-
-
-'''
 
 
