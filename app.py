@@ -1,3 +1,12 @@
+from flask import Flask
+app = Flask(__name__)
+@app.route('/')
+def index():
+	return "<h1> Yo, it's working! </h1>"
+if __name__ == "__main__":
+	app.run()
+
+'''
 #For xpath
 from lxml import html
 
@@ -482,19 +491,24 @@ if __name__ == '__main__':
 	app.run(debug=True, threaded=True)
 
 
+
+# xpaths = {
+	
+# 	'amazon_name': '//*[@id="productTitle"]/text()',
+# 	'amazon_price' : '//*[@id="priceblock_ourprice"]/text()',
+
+# 	'flipkart_name' : '//*[@id="container"]/div/div[1]/div/div/div/div[1]/div/div[2]/div[2]/div[1]/div/h1/text()[1]',
+# 	'flipkart_price' : '//*[@id="container"]/div/div[1]/div/div/div/div[1]/div/div[2]/div[2]/div[4]/div[1]/div/div[1]/text()[2]',
+
+# 	'jabong_name' : 'normalize-space(//span[@class="product-title"]/text()[last()])',
+# 	'jabong_price' : '//*[@id="pdp-price-info"]/span[3]/text()',
+
+# 	'manipalgrocer_name' : 'normalize-space(//h1[@id = "heading_title"]/text()[last()])',
+# 	'manipalgrocer_price' : 'normalize-space(//h2[@id = "price"]/text()[last()])'
+	
+# }
+
+
 '''
-xpaths = {
-	
-	'amazon_name': '//*[@id="productTitle"]/text()',
-	'amazon_price' : '//*[@id="priceblock_ourprice"]/text()',
 
-	'flipkart_name' : '//*[@id="container"]/div/div[1]/div/div/div/div[1]/div/div[2]/div[2]/div[1]/div/h1/text()[1]',
-	'flipkart_price' : '//*[@id="container"]/div/div[1]/div/div/div/div[1]/div/div[2]/div[2]/div[4]/div[1]/div/div[1]/text()[2]',
 
-	'jabong_name' : 'normalize-space(//span[@class="product-title"]/text()[last()])',
-	'jabong_price' : '//*[@id="pdp-price-info"]/span[3]/text()',
-
-	'manipalgrocer_name' : 'normalize-space(//h1[@id = "heading_title"]/text()[last()])',
-	'manipalgrocer_price' : 'normalize-space(//h2[@id = "price"]/text()[last()])'
-	
-}'''
